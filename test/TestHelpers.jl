@@ -2,7 +2,7 @@ module TestHelpers
 
 using Base.Test
 using JuMP
-using MathProgBase
+using MathOptInterface
 
 using MIPVerify
 using MIPVerify: find_adversarial_example
@@ -21,17 +21,17 @@ else
     tightening_solver = GurobiSolver(Gurobi.Env(), OutputFlag=0, TimeLimit=20)
 end
 
-function get_main_solver()::MathProgBase.SolverInterface.AbstractMathProgSolver
+function get_main_solver()::JuMP.OptimizerFactory
     main_solver
 end
 
-function get_tightening_solver()::MathProgBase.SolverInterface.AbstractMathProgSolver
+function get_tightening_solver()::JuMP.OptimizerFactory
     tightening_solver
 end
 
 function get_new_model()::Model
     solver = get_main_solver()
-    MathProgBase.setparameters!(solver, Silent = true)
+    # JuMP.OptimizerFactory.setparameters!(solver, Silent = true)
     return Model(solver=solver)
 end
 

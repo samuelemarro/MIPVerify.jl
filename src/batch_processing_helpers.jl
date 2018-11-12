@@ -252,7 +252,7 @@ function batch_find_untargeted_attack(
     nn::NeuralNet,
     dataset::MIPVerify.LabelledDataset,
     target_indices::AbstractArray{<:Integer},
-    main_solver::MathProgBase.SolverInterface.AbstractMathProgSolver;
+    main_solver::JuMP.OptimizerFactory;
     save_path::String = ".",
     solve_rerun_option::MIPVerify.SolveRerunOption = MIPVerify.never,
     pp::MIPVerify.PerturbationFamily = MIPVerify.UnrestrictedPerturbationFamily(),
@@ -260,7 +260,7 @@ function batch_find_untargeted_attack(
     tolerance::Real = 0.0,
     rebuild = false,
     tightening_algorithm::MIPVerify.TighteningAlgorithm = DEFAULT_TIGHTENING_ALGORITHM,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver = MIPVerify.get_default_tightening_solver(main_solver),
+    tightening_solver::JuMP.OptimizerFactory = MIPVerify.get_default_tightening_solver(main_solver),
     cache_model = true,
     solve_if_predicted_in_targeted = true,
     adversarial_example_objective::AdversarialExampleObjective = closest
@@ -336,7 +336,7 @@ function batch_find_targeted_attack(
     nn::NeuralNet,
     dataset::MIPVerify.LabelledDataset,
     target_indices::AbstractArray{<:Integer},
-    main_solver::MathProgBase.SolverInterface.AbstractMathProgSolver;
+    main_solver::JuMP.OptimizerFactory;
     save_path::String = ".",
     solve_rerun_option::MIPVerify.SolveRerunOption = MIPVerify.never,
     target_labels::AbstractArray{<:Integer} = [],
@@ -345,7 +345,7 @@ function batch_find_targeted_attack(
     tolerance::Real = 0.0,
     rebuild = false,
     tightening_algorithm::MIPVerify.TighteningAlgorithm = DEFAULT_TIGHTENING_ALGORITHM,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver = MIPVerify.get_default_tightening_solver(main_solver),
+    tightening_solver::JuMP.OptimizerFactory = MIPVerify.get_default_tightening_solver(main_solver),
     cache_model = true,
     solve_if_predicted_in_targeted = true
     )::Void
@@ -379,7 +379,7 @@ function batch_build_model(
     nn::NeuralNet,
     dataset::MIPVerify.LabelledDataset,
     target_indices::AbstractArray{<:Integer},
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver;
+    tightening_solver::JuMP.OptimizerFactory;
     pp::MIPVerify.PerturbationFamily = MIPVerify.UnrestrictedPerturbationFamily(),
     tightening_algorithm::MIPVerify.TighteningAlgorithm = DEFAULT_TIGHTENING_ALGORITHM,
     )::Void

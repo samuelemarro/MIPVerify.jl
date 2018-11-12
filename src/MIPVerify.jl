@@ -2,13 +2,13 @@ module MIPVerify
 
 using Base.Cartesian
 using JuMP
-using ConditionalJuMP
 using Memento
 using AutoHashEquals
 using DocStringExtensions
 using ProgressMeter
 using CSV
 using DataFrames
+using MathOptInterface
 
 const dependencies_path = joinpath(Pkg.dir("MIPVerify"), "deps")
 
@@ -29,10 +29,9 @@ function get_max_index(
 end
 
 function get_default_tightening_solver(
-    main_solver::MathProgBase.SolverInterface.AbstractMathProgSolver
-    )::MathProgBase.SolverInterface.AbstractMathProgSolver
+    main_solver::JuMP.OptimizerFactory
+    )::JuMP.OptimizerFactory
     tightening_solver = typeof(main_solver)()
-    MathProgBase.setparameters!(tightening_solver, Silent = true, TimeLimit = 20)
     return tightening_solver
 end
 
@@ -86,14 +85,14 @@ function find_adversarial_example(
     nn::NeuralNet, 
     input::Array{<:Real},
     target_selection::Union{Integer, Array{<:Integer, 1}},
-    main_solver::MathProgBase.SolverInterface.AbstractMathProgSolver;
+    main_solver::JuMP.OptimizerFactory;
     invert_target_selection::Bool = false,
     pp::PerturbationFamily = UnrestrictedPerturbationFamily(),
     norm_order::Real = 1,
     tolerance::Real = 0.0,
     rebuild::Bool = false,
     tightening_algorithm::TighteningAlgorithm = DEFAULT_TIGHTENING_ALGORITHM,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver = get_default_tightening_solver(main_solver),
+    tightening_solver::JuMP.OptimizerFactory = get_default_tightening_solver(main_solver),
     cache_model::Bool = true,
     solve_if_predicted_in_targeted = true,
     adversarial_example_objective::AdversarialExampleObjective = closest
@@ -135,8 +134,7 @@ function find_adversarial_example(
             else
                 error("Unknown adversarial_example_objective $adversarial_example_objective")
             end
-            setsolver(d[:Model], main_solver)
-            d[:SolveStatus] = solve(m)
+            d[:SolveStatus] = optimize!(m, main_solver)
         end
     end
     d[:TotalTime] = total_time

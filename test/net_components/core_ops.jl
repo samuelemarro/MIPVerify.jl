@@ -1,9 +1,7 @@
 using Base.Test
 using JuMP
-using MathProgBase
 using MIPVerify
 using MIPVerify: relu, get_target_indexes, set_max_indexes, get_max_index, matmul, tight_upperbound, tight_lowerbound, abs_ge, masked_relu, is_constant, get_tightening_algorithm, mip, lp, interval_arithmetic, DEFAULT_TIGHTENING_ALGORITHM, TighteningAlgorithm, MIPVerifyExt
-using ConditionalJuMP
 isdefined(:TestHelpers) || include("../TestHelpers.jl")
 using TestHelpers: get_new_model
 
@@ -15,14 +13,14 @@ end
     @testset "is_constant" begin
         @testset "JuMP.AffExpr" begin
             m = get_new_model()
-            @test is_constant(zero(JuMP.Variable))
-            @test is_constant(one(JuMP.Variable))
+            @test is_constant(zero(JuMP.VariableRef))
+            @test is_constant(one(JuMP.VariableRef))
             x = @variable(m)
             y = @variable(m)
             z = 2*x+3*y
             @test !is_constant(z)
         end
-        @testset "JuMP.Variable" begin
+        @testset "JuMP.VariableRef" begin
             m = get_new_model()
             x = @variable(m)
             @test !is_constant(x)
@@ -32,8 +30,8 @@ end
     @testset "getmodel" begin
         m=get_new_model()
         y1 = @variable(m)
-        x1 = one(JuMP.Variable)*1
-        x2 = one(JuMP.Variable)*2
+        x1 = one(JuMP.VariableRef)*1
+        x2 = one(JuMP.VariableRef)*2
         @test MIPVerify.getmodel([x1, y1]) == m
         @test_throws DomainError MIPVerify.getmodel([x1, x2])
     end
@@ -44,7 +42,7 @@ end
         tightening_algorithms = [interval_arithmetic, mip, lp]
 
         @testset "if variable known to be constant, always use interval_arithmetic" begin
-            x = one(JuMP.Variable) # is_constant(x)==true
+            x = one(JuMP.VariableRef) # is_constant(x)==true
             for alg in tightening_algorithms
                 @test get_tightening_algorithm(x, Nullable{TighteningAlgorithm}(alg)) == interval_arithmetic
             end
@@ -91,7 +89,7 @@ end
         end
         @testset "multiple variables to maximize over, some constant" begin
             m = get_new_model()
-            x0 = one(JuMP.Variable) # add constant variable at start
+            x0 = one(JuMP.VariableRef) # add constant variable at start
             x1 = @variable(m, lowerbound=0, upperbound=3)
             x2 = @variable(m, lowerbound=4, upperbound=5)
             x3 = @variable(m, lowerbound=2, upperbound=7)
@@ -111,7 +109,7 @@ end
         end
         @testset "single variable to maximize over, constant" begin
             m = get_new_model()
-            x1 = one(JuMP.Variable)*3
+            x1 = one(JuMP.VariableRef)*3
             xmax = MIPVerify.maximum([x1])
 
             # no binary variables need to be introduced
@@ -122,8 +120,8 @@ end
         end
         @testset "multiple variables to maximize over, all constant" begin
             m = get_new_model()
-            x1 = one(JuMP.Variable)
-            x2 = one(JuMP.Variable)*2
+            x1 = one(JuMP.VariableRef)
+            x2 = one(JuMP.VariableRef)*2
             xmax = MIPVerify.maximum([x1, x2])
 
             # no binary variables need to be introduced
@@ -167,8 +165,8 @@ end
         end
         @testset "multiple variables to maximize over, all constant" begin
             m = get_new_model()
-            x1 = one(JuMP.Variable)
-            x2 = one(JuMP.Variable)*2
+            x1 = one(JuMP.VariableRef)
+            x2 = one(JuMP.VariableRef)*2
             xmax = MIPVerify.maximum([x1, x2], [1, 2], [1, 2])
 
             # no binary variables need to be introduced
@@ -182,8 +180,8 @@ end
     @testset "maximum_ge" begin
         @testset "multiple variables to maximize over, all constant" begin
             m = get_new_model()
-            x1 = one(JuMP.Variable)
-            x2 = one(JuMP.Variable)*2
+            x1 = one(JuMP.VariableRef)
+            x2 = one(JuMP.VariableRef)*2
             xmax = MIPVerify.maximum([x1, x2])
 
             solve_output = getvalue(xmax)
@@ -200,7 +198,7 @@ end
         
         @testset "Variable Input" begin
             @testset "constant" begin
-                x = one(JuMP.Variable)
+                x = one(JuMP.VariableRef)
                 x_r = relu(x)
                 @test MIPVerify.is_constant(x_r)
                 @test x_r.constant == x.constant
@@ -495,7 +493,7 @@ end
             @testset "first JuMPLinearType is constant" begin
                 @testset "selected variable has non-constant value, and can take the maximum value" begin
                     m = get_new_model()
-                    x1 = one(JuMP.Variable)
+                    x1 = one(JuMP.VariableRef)
                     x2 = @variable(m, lowerbound=4, upperbound=5)
                     set_max_indexes(m, [x1, x2], [2])
                     @objective(m, Min, x2)
@@ -504,7 +502,7 @@ end
                 end
                 @testset "selected variable has non-constant value, and cannot take the maximum value" begin
                     m = get_new_model()
-                    x1 = one(JuMP.Variable)
+                    x1 = one(JuMP.VariableRef)
                     x2 = @variable(m, lowerbound=-5, upperbound=-4)
                     set_max_indexes(m, [x1, x2], [2])
                     @objective(m, Min, x2)
@@ -513,7 +511,7 @@ end
                 end
                 @testset "selected variable has constant value, and can take the maximum value" begin
                     m = get_new_model()
-                    x1 = one(JuMP.Variable)
+                    x1 = one(JuMP.VariableRef)
                     x2 = @variable(m, lowerbound=-5, upperbound=-4)
                     set_max_indexes(m, [x1, x2], [1])
                     @objective(m, Min, x2)
@@ -522,7 +520,7 @@ end
                 end
                 @testset "selected variable has constant value, and cannot take the maximum value" begin
                     m = get_new_model()
-                    x1 = one(JuMP.Variable)
+                    x1 = one(JuMP.VariableRef)
                     x2 = @variable(m, lowerbound=4, upperbound=5)
                     set_max_indexes(m, [x1, x2], [1])
                     @objective(m, Min, x2)
@@ -564,7 +562,7 @@ end
         end
 
         @testset "Bounds on constants" begin
-            x1 = one(JuMP.Variable)
+            x1 = one(JuMP.VariableRef)
             @test tight_upperbound(x1) == 1
             @test tight_lowerbound(x1) == 1
         end

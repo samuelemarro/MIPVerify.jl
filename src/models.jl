@@ -1,5 +1,4 @@
 using AutoHashEquals
-using MathProgBase
 
 const module_tempdir = joinpath(Base.tempdir(), "julia", string(module_name(current_module())))
 const model_dir = joinpath(module_tempdir, "models")
@@ -52,7 +51,7 @@ function get_model(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::UnrestrictedPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_solver::JuMP.OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm,
     rebuild::Bool,
     cache_model::Bool
@@ -70,7 +69,7 @@ function get_model(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::RestrictedPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_solver::JuMP.OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm,
     rebuild::Bool,
     cache_model::Bool
@@ -122,7 +121,7 @@ function get_reusable_model(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::PerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_solver::JuMP.OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm,
     rebuild::Bool,
     cache_model::Bool
@@ -159,7 +158,7 @@ function build_reusable_model_uncached(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::UnrestrictedPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_solver::JuMP.OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm 
     )::Dict
 
@@ -192,7 +191,7 @@ function build_reusable_model_uncached(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::BlurringPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_solver::JuMP.OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm 
     )::Dict
     # For blurring perturbations, we build a new model for each input. This enables us to get
@@ -229,7 +228,7 @@ function build_reusable_model_uncached(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::LInfNormBoundedPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_solver::JuMP.OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm 
     )::Dict
 

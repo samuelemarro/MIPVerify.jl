@@ -1,6 +1,36 @@
 using JuMP
-using ConditionalJuMP
 using Memento
+using IntervalArithmetic: Interval
+
+getmodel(x::JuMP.VariableRef) = x.m
+getmodel(x::JuMP.GenericAffExpr) = first(x.vars).m
+
+lowerbound(x::Number) = x
+upperbound(x::Number) = x
+lowerbound(x::JuMP.VariableRef) = JuMP.getlowerbound(x)
+upperbound(x::JuMP.VariableRef) = JuMP.getupperbound(x)
+
+interval(x::Number) = Interval(x, x)
+interval(x::JuMP.VariableRef) = Interval(JuMP.getlowerbound(x), JuMP.getupperbound(x))
+
+function interval(e::JuMP.GenericAffExpr)
+    if isempty(e.coeffs)
+        return Interval(e.constant, e.constant)
+    else
+        result = Interval(e.constant, e.constant)
+        for i in eachindex(e.coeffs)
+            var = e.vars[i]
+            coef = e.coeffs[i]
+            result += Interval(coef, coef) * Interval(lowerbound(var), upperbound(var))
+        end
+        return result
+    end
+end
+
+upperbound(e::JuMP.GenericAffExpr) = upperbound(interval(e))
+lowerbound(e::JuMP.GenericAffExpr) = lowerbound(interval(e))
+lowerbound(i::Interval) = i.lo
+upperbound(i::Interval) = i.hi
 
 """
 $(SIGNATURES)
@@ -13,14 +43,14 @@ function is_constant(x::JuMP.AffExpr)
     x.vars |> length == 0
 end
 
-function is_constant(x::JuMP.Variable)
+function is_constant(x::JuMP.VariableRef)
     false
 end
 
 function getmodel(xs::AbstractArray{T}) where {T<:JuMPLinearType}
     for x in xs
         if !is_constant(x)
-            return ConditionalJuMP.getmodel(x)
+            return getmodel(x)
         end
     end
     throw(DomainError("None of the JuMPLinearTypes has an associated model."))
@@ -35,7 +65,7 @@ function get_tightening_algorithm(
         return get(nta)
     else
         # x is not constant, and thus x must have an associated model
-        model = ConditionalJuMP.getmodel(x)
+        model = getmodel(x)
         return !haskey(model.ext, :MIPVerify) ? DEFAULT_TIGHTENING_ALGORITHM : model.ext[:MIPVerify].tightening_algorithm
     end
 end
@@ -77,7 +107,7 @@ function tight_bound(
     end
     relaxation = (tightening_algorithm == lp)
     # x is not constant, and thus x must have an associated model
-    model = ConditionalJuMP.getmodel(x)
+    model = getmodel(x)
     @objective(model, bound_obj[bound_type], x)
     status = solve(model, suppress_warnings = true, relaxation=relaxation)
     if status == :Optimal
@@ -146,7 +176,7 @@ function relu(x::T, l::Real, u::Real)::JuMP.AffExpr where {T<:JuMPLinearType}
         return x
     else
         # since we know that u!=l, x is not constant, and thus x must have an associated model
-        model = ConditionalJuMP.getmodel(x)
+        model = getmodel(x)
         x_rect = @variable(model)
         a = @variable(model, category = :Bin)
 
@@ -298,7 +328,7 @@ end
 function maximum_of_constants(xs::AbstractArray{T}) where {T<:JuMPLinearType}
     @assert all(is_constant.(xs))
     max_val = map(x -> x.constant, xs) |> maximum
-    return one(JuMP.Variable)*max_val
+    return one(JuMP.VariableRef)*max_val
 end
 
 """
@@ -380,7 +410,7 @@ Only use when you are minimizing over the output in the objective.
 
 NB: If all of xs are constant, we simply return the largest of them.
 """
-function maximum_ge(xs::AbstractArray{T})::JuMP.Variable where {T<:JuMPLinearType}
+function maximum_ge(xs::AbstractArray{T})::JuMP.VariableRef where {T<:JuMPLinearType}
     @assert length(xs)>0
     if all(is_constant.(xs))
         return maximum_of_constants(xs)
@@ -401,9 +431,9 @@ Only use when you are minimizing over the output in the objective.
 """
 function abs_ge(x::JuMPLinearType)::JuMP.AffExpr
     if is_constant(x)
-        return one(JuMP.Variable)*abs(x.constant)
+        return one(JuMP.VariableRef)*abs(x.constant)
     end
-    model = ConditionalJuMP.getmodel(x)
+    model = getmodel(x)
     u = upperbound(x)
     l = lowerbound(x)
     if u <= 0
