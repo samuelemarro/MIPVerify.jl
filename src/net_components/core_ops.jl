@@ -45,8 +45,8 @@ bound_f = Dict(
     upper_bound_type => upperbound
 )
 bound_obj = Dict(
-    lower_bound_type => :Min,
-    upper_bound_type => :Max
+    lower_bound_type => Min,
+    upper_bound_type => Max
 )
 bound_delta_f = Dict(
     lower_bound_type => (b, b_0) -> b - b_0,
