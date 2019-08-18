@@ -43,20 +43,20 @@ using JuMP
                 n_inf = get_norm(Inf, xs)
 
                 @objective(m, Min, n_1)
-                solve(m)
-                @test getobjectivevalue(m)≈6
+                optimize!(m)
+                @test JuMP.objective_value(m)≈6
 
                 if Base.find_package("Gurobi") != nothing
                     # Skip these tests if Gurobi is not installed.
                     # Cbc does not solve problems with quadratic objectives
                     @objective(m, Min, n_2)
-                    solve(m)
-                    @test getobjectivevalue(m)≈14
+                    optimize!(m)
+                    @test JuMP.objective_value(m)≈14
                 end
 
                 @objective(m, Min, n_inf)
-                solve(m)
-                @test getobjectivevalue(m)≈3
+                optimize!(m)
+                @test JuMP.objective_value(m)≈3
 
                 @test_throws DomainError get_norm(3, xs)
             end

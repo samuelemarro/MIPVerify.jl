@@ -2,7 +2,7 @@ module TestHelpers
 
 using Test
 using JuMP
-using MathProgBase
+using MathOptInterface
 
 using MIPVerify
 using MIPVerify: find_adversarial_example
@@ -13,26 +13,39 @@ const TEST_DEFAULT_TIGHTENING_ALGORITHM = lp
 
 if Base.find_package("Gurobi") == nothing
     using Cbc
-    main_solver = CbcSolver(logLevel=0)
-    tightening_solver = CbcSolver(logLevel=0, seconds=20)
+    optimizer = Cbc.Optimizer
+    main_optimizer_factory = with_optimizer(
+        optimizer;
+        logLevel = 0
+    )
+    tightening_optimizer_factory = with_optimizer(
+        optimizer;
+        logLevel = 0, seconds = 20
+    )
 else
     using Gurobi
-    main_solver = GurobiSolver(Gurobi.Env())
-    tightening_solver = GurobiSolver(Gurobi.Env(), OutputFlag=0, TimeLimit=20)
+    env = Gurobi.Env()
+    optimizer = Gurobi.Optimizer
+    main_optimizer_factory = with_optimizer(
+        optimizer, env;
+        OutputFlag = 0
+    )
+    tightening_optimizer_factory = with_optimizer(
+        optimizer, env;
+        OutputFlag = 0, TimeLimit = 20
+    )
 end
 
-function get_main_solver()::MathProgBase.SolverInterface.AbstractMathProgSolver
-    main_solver
+function get_main_optimizer_factory()::OptimizerFactory
+    main_optimizer_factory
 end
 
-function get_tightening_solver()::MathProgBase.SolverInterface.AbstractMathProgSolver
-    tightening_solver
+function get_tightening_optimizer_factory()::OptimizerFactory
+    tightening_optimizer_factory
 end
 
 function get_new_model()::Model
-    solver = get_main_solver()
-    MathProgBase.setparameters!(solver, Silent = true)
-    return Model(solver=solver)
+    return Model(get_main_optimizer_factory())
 end
 
 """
@@ -56,14 +69,14 @@ function test_find_adversarial_example(
     invert_target_selection::Bool = false,
     ) where {N} 
     d = find_adversarial_example(
-        nn, input, target_selection, get_main_solver(),
+        nn, input, target_selection, get_main_optimizer_factory(),
         pp = pp, norm_order = norm_order, tolerance = tolerance, rebuild=false, 
-        tightening_solver=get_tightening_solver(), tightening_algorithm=TEST_DEFAULT_TIGHTENING_ALGORITHM, 
+        tightening_optimizer_factory=get_tightening_optimizer_factory(), tightening_algorithm=TEST_DEFAULT_TIGHTENING_ALGORITHM, 
         invert_target_selection=invert_target_selection)
-    if d[:SolveStatus] == :Infeasible || d[:SolveStatus] == :InfeasibleOrUnbounded
+    if d[:SolveStatus] == MathOptInterface.INFEASIBLE || d[:SolveStatus] == MathOptInterface.INFEASIBLE_OR_UNBOUNDED
         @test isnan(expected_objective_value)
     else
-        actual_objective_value = getobjectivevalue(d[:Model])
+        actual_objective_value = JuMP.objective_value(d[:Model])
         if expected_objective_value == 0
             @test isapprox(actual_objective_value, expected_objective_value; atol=1e-4)
         else

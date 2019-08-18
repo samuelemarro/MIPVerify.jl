@@ -98,7 +98,7 @@ using MIPVerify: check_size, increment!
             p_v = Conv2d(filter_v, bias_v)
             output_v = MIPVerify.conv2d(input, p_v)
             @constraint(m, output_v .== true_output)
-            solve(m)
+            optimize!(m)
 
             p_solve = MIPVerify.Conv2d(value.(filter_v), value.(bias_v))
             solve_output = MIPVerify.conv2d(input, p_solve)
@@ -109,7 +109,7 @@ using MIPVerify: check_size, increment!
             input_v = map(_ -> @variable(m), CartesianIndices(input_size))
             output_v = MIPVerify.conv2d(input_v, p)
             @constraint(m, output_v .== true_output)
-            solve(m)
+            optimize!(m)
 
             solve_output = MIPVerify.conv2d(value.(input_v), p)
             @test solve_output≈true_output

@@ -2,46 +2,37 @@
 # This allows us to upgrade just the relevant parts to be compatible with JuMP >= 0.19
 
 using JuMP
-using JuMP: GenericAffExpr, Variable
 using IntervalArithmetic: Interval
 
 """
 Simplification function that chooses the appropriate algorithm based on the number
 of variables.
 """
-function simplify!(e::JuMP.GenericAffExpr{T, Variable}) where T
+function simplify!(e::JuMP.GenericAffExpr{T, VariableRef}) where T
     e
 end
 
-getmodel(x::JuMP.Variable) = x.m
-getmodel(x::JuMP.GenericAffExpr) = first(x.vars).m
+getmodel(x::VariableRef) = x.model
+getmodel(x::GenericAffExpr) = first(x.terms)[1].model
 
 lowerbound(x::Number) = x
 upperbound(x::Number) = x
-lowerbound(x::Variable) = JuMP.getlowerbound(x)
-upperbound(x::Variable) = JuMP.getupperbound(x)
+lowerbound(x::VariableRef) = lower_bound(x)
+upperbound(x::VariableRef) = upper_bound(x)
 
-interval(x::Number, simplify=true) = Interval(x, x)
-interval(x::Variable, simplify=true) = Interval(JuMP.getlowerbound(x), JuMP.getupperbound(x))
+interval(x::Number) = Interval(x, x)
+interval(x::VariableRef) = Interval(lower_bound(x), upper_bound(x))
 
-function interval(e::JuMP.GenericAffExpr, needs_simplification=true)
-    if needs_simplification
-        simplify!(e)
+function interval(e::GenericAffExpr)
+    result = interval(e.constant)
+    for t in e.terms
+        var, coef = t
+        result += interval(coef) * interval(var)
     end
-    if isempty(e.coeffs)
-        return Interval(e.constant, e.constant)
-    else
-        result = Interval(e.constant, e.constant)
-        for i in eachindex(e.coeffs)
-            var = e.vars[i]
-            coef = e.coeffs[i]
-            result += Interval(coef, coef) * Interval(getlowerbound(var), getupperbound(var))
-        end
-        return result
-    end
+    return result
 end
 
-upperbound(e::GenericAffExpr, simplify=true) = upperbound(interval(e, simplify))
-lowerbound(e::GenericAffExpr, simplify=true) = lowerbound(interval(e, simplify))
+upperbound(e::GenericAffExpr) = upperbound(interval(e))
+lowerbound(e::GenericAffExpr) = lowerbound(interval(e))
 lowerbound(i::Interval) = i.lo
 upperbound(i::Interval) = i.hi

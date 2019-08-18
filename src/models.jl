@@ -1,5 +1,5 @@
 using AutoHashEquals
-using MathProgBase
+using MathOptInterface
 using Serialization
 
 const module_tempdir = joinpath(Base.tempdir(), "julia", string(nameof(@__MODULE__)))
@@ -53,12 +53,12 @@ function get_model(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::UnrestrictedPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_optimizer_factory::OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm,
     rebuild::Bool,
     cache_model::Bool
     )::Dict
-    d = get_reusable_model(nn, input, pp, tightening_solver, tightening_algorithm, rebuild, cache_model)
+    d = get_reusable_model(nn, input, pp, tightening_optimizer_factory, tightening_algorithm, rebuild, cache_model)
     @constraint(d[:Model], d[:Input] .== input)
     delete!(d, :Input)
     # NOTE (vtjeng): It is important to set the solver before attempting to add a 
@@ -71,12 +71,12 @@ function get_model(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::RestrictedPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_optimizer_factory::OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm,
     rebuild::Bool,
     cache_model::Bool
     )::Dict
-    d = get_reusable_model(nn, input, pp, tightening_solver, tightening_algorithm, rebuild, cache_model)
+    d = get_reusable_model(nn, input, pp, tightening_optimizer_factory, tightening_algorithm, rebuild, cache_model)
     return d
 end
 
@@ -123,7 +123,7 @@ function get_reusable_model(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::PerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_optimizer_factory::OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm,
     rebuild::Bool,
     cache_model::Bool
@@ -143,7 +143,7 @@ function get_reusable_model(
     else
         notice(MIPVerify.LOGGER, """
         Rebuilding model from scratch. This may take some time as we determine upper and lower bounds for the input to each non-linear unit.""")
-        d = build_reusable_model_uncached(nn, input, pp, tightening_solver, tightening_algorithm)
+        d = build_reusable_model_uncached(nn, input, pp, tightening_optimizer_factory, tightening_algorithm)
         if cache_model
             notice(MIPVerify.LOGGER, """
             The model built will be cached and re-used for future solves, unless you explicitly set rebuild=true.""")
@@ -152,7 +152,7 @@ function get_reusable_model(
             end
         end
     end
-    setsolver(d[:Model], tightening_solver)
+    set_optimizer(d[:Model], tightening_optimizer_factory)
     return d
 end
 
@@ -160,11 +160,11 @@ function build_reusable_model_uncached(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::UnrestrictedPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_optimizer_factory::OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm 
     )::Dict
 
-    m = Model(solver = tightening_solver)
+    m = Model(tightening_optimizer_factory)
     m.ext[:MIPVerify] = MIPVerifyExt(tightening_algorithm) # TODO: consider writing as seperate function
 
     input_range = CartesianIndices(size(input))
@@ -193,13 +193,13 @@ function build_reusable_model_uncached(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::BlurringPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_optimizer_factory::OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm 
     )::Dict
     # For blurring perturbations, we build a new model for each input. This enables us to get
     # much better bounds.
 
-    m = Model(solver = tightening_solver)
+    m = Model(tightening_optimizer_factory)
     m.ext[:MIPVerify] = MIPVerifyExt(tightening_algorithm)
 
     input_size = size(input)
@@ -230,11 +230,11 @@ function build_reusable_model_uncached(
     nn::NeuralNet,
     input::Array{<:Real},
     pp::LInfNormBoundedPerturbationFamily,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver,
+    tightening_optimizer_factory::OptimizerFactory,
     tightening_algorithm::TighteningAlgorithm 
     )::Dict
 
-    m = Model(solver = tightening_solver)
+    m = Model(tightening_optimizer_factory)
     m.ext[:MIPVerify] = MIPVerifyExt(tightening_algorithm)
 
     input_range = CartesianIndices(size(input))

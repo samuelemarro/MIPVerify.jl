@@ -27,21 +27,21 @@ function extract_results_for_save(d::Dict)::Dict
     r = Dict()
     r[:SolveTime] = d[:SolveTime]
     r[:ObjectiveBound] = getobjbound(m)
-    r[:ObjectiveValue] = getobjectivevalue(m)
+    r[:ObjectiveValue] = JuMP.objective_value(m)
     r[:TargetIndexes] = d[:TargetIndexes]
     r[:SolveStatus] = d[:SolveStatus]
     r[:PredictedIndex] = d[:PredictedIndex]
     r[:TighteningApproach] = d[:TighteningApproach]
     r[:TotalTime] = d[:TotalTime]
     if !isnan(r[:ObjectiveValue])
-        r[:PerturbationValue] = d[:Perturbation] |> value.
-        r[:PerturbedInputValue] = d[:PerturbedInput] |> value.
+        r[:PerturbationValue] = value.(d[:Perturbation])
+        r[:PerturbedInputValue] = value.(d[:PerturbedInput])
     end
     return r
 end
 
-function is_infeasible(s::Symbol)::Bool
-    s == :Infeasible || s == :InfeasibleOrUnbounded
+function is_infeasible(s::MathOptInterface.TerminationStatusCode)::Bool
+    s == MathOptInterface.INFEASIBLE || s == MathOptInterface.INFEASIBLE_OR_UNBOUNDED
 end
 
 function get_uuid()::String
@@ -72,7 +72,7 @@ function generate_csv_summary_line_optimal(sample_number::Integer, d::Dict)
         d[:PredictedIndex],
         d[:TargetIndexes],
         0,
-        :Optimal,
+        MathOptInterface.OPTIMAL,
         false,
         0,
         0,
@@ -232,13 +232,14 @@ If the summary file already contains a result for a given target index, the
 `solve_rerun_option` determines whether we rerun [`find_adversarial_example`](@ref) for this
 particular index.
 
-`main_solver` specifies the solver used to solve the MIP problem once it has been built.
+`main_optimizer_factory` specifies the optimizer used to solve the MIP problem once it has 
+been built.
 
 # Named Arguments:
 + `save_path`: Directory where results will be saved. Defaults to current directory.
-+ `pp, norm_order, tolerance, rebuild, tightening_algorithm, tightening_solver, cache_model,
-  solve_if_predicted_in_targeted` are passed
-  through to [`find_adversarial_example`](@ref) and have the same default values; 
++ `pp, norm_order, tolerance, rebuild, tightening_algorithm, tightening_optimizer_factory, 
+  cache_model, solve_if_predicted_in_targeted` are passed through to 
+  [`find_adversarial_example`](@ref) and have the same default values; 
   see documentation for that function for more details.
 + `solve_rerun_option::MIPVerify.SolveRerunOption`: Options are 
   `never`, `always`, `resolve_ambiguous_cases`, and `refine_insecure_cases`. 
@@ -248,7 +249,7 @@ function batch_find_untargeted_attack(
     nn::NeuralNet,
     dataset::MIPVerify.LabelledDataset,
     target_indices::AbstractArray{<:Integer},
-    main_solver::MathProgBase.SolverInterface.AbstractMathProgSolver;
+    main_optimizer_factory::OptimizerFactory;
     save_path::String = ".",
     solve_rerun_option::MIPVerify.SolveRerunOption = MIPVerify.never,
     pp::MIPVerify.PerturbationFamily = MIPVerify.UnrestrictedPerturbationFamily(),
@@ -256,7 +257,7 @@ function batch_find_untargeted_attack(
     tolerance::Real = 0.0,
     rebuild = false,
     tightening_algorithm::MIPVerify.TighteningAlgorithm = DEFAULT_TIGHTENING_ALGORITHM,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver = MIPVerify.get_default_tightening_solver(main_solver),
+    tightening_optimizer_factory::OptimizerFactory = main_optimizer_factory,
     cache_model = true,
     solve_if_predicted_in_targeted = true,
     adversarial_example_objective::AdversarialExampleObjective = closest
@@ -271,7 +272,13 @@ function batch_find_untargeted_attack(
             Memento.info(MIPVerify.LOGGER, "Working on index $(sample_number)")
             input = MIPVerify.get_image(dataset.images, sample_number)
             true_one_indexed_label = MIPVerify.get_label(dataset.labels, sample_number) + 1
-            d = find_adversarial_example(nn, input, true_one_indexed_label, main_solver, invert_target_selection = true, pp=pp, norm_order=norm_order, tolerance=tolerance, rebuild=rebuild, tightening_algorithm = tightening_algorithm, tightening_solver = tightening_solver, cache_model=cache_model, solve_if_predicted_in_targeted=solve_if_predicted_in_targeted, adversarial_example_objective=adversarial_example_objective)
+            d = find_adversarial_example(
+                    nn, input, true_one_indexed_label, main_optimizer_factory, 
+                    invert_target_selection = true, pp=pp, norm_order=norm_order, tolerance=tolerance, rebuild=rebuild, 
+                    tightening_algorithm = tightening_algorithm, tightening_optimizer_factory = tightening_optimizer_factory, 
+                    cache_model=cache_model, solve_if_predicted_in_targeted=solve_if_predicted_in_targeted, 
+                    adversarial_example_objective=adversarial_example_objective
+                )
 
             save_to_disk(sample_number, main_path, results_dir, summary_file_path, d, solve_if_predicted_in_targeted)
         end
@@ -332,7 +339,7 @@ function batch_find_targeted_attack(
     nn::NeuralNet,
     dataset::MIPVerify.LabelledDataset,
     target_indices::AbstractArray{<:Integer},
-    main_solver::MathProgBase.SolverInterface.AbstractMathProgSolver;
+    main_optimizer_factory::OptimizerFactory;
     save_path::String = ".",
     solve_rerun_option::MIPVerify.SolveRerunOption = MIPVerify.never,
     target_labels::AbstractArray{<:Integer} = [],
@@ -341,7 +348,7 @@ function batch_find_targeted_attack(
     tolerance::Real = 0.0,
     rebuild = false,
     tightening_algorithm::MIPVerify.TighteningAlgorithm = DEFAULT_TIGHTENING_ALGORITHM,
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver = MIPVerify.get_default_tightening_solver(main_solver),
+    tightening_optimizer_factory::OptimizerFactory = main_optimizer_factory,
     cache_model = true,
     solve_if_predicted_in_targeted = true
     )::Nothing
@@ -362,7 +369,7 @@ function batch_find_targeted_attack(
 
                 Memento.info(MIPVerify.LOGGER, "Working on index $(sample_number), with true_label $(true_one_indexed_label) and target_label $(target_label)")
             
-                d = find_adversarial_example(nn, input, target_label, main_solver, invert_target_selection = false, pp=pp, norm_order=norm_order, tolerance=tolerance, rebuild=rebuild, tightening_algorithm = tightening_algorithm, tightening_solver = tightening_solver, cache_model=cache_model, solve_if_predicted_in_targeted=solve_if_predicted_in_targeted)
+                d = find_adversarial_example(nn, input, target_label, main_solver, invert_target_selection = false, pp=pp, norm_order=norm_order, tolerance=tolerance, rebuild=rebuild, tightening_algorithm = tightening_algorithm, tightening_optimizer_factory = tightening_optimizer_factory, cache_model=cache_model, solve_if_predicted_in_targeted=solve_if_predicted_in_targeted)
 
                 save_to_disk(sample_number, main_path, results_dir, summary_file_path, d, solve_if_predicted_in_targeted)
             end
@@ -375,7 +382,7 @@ function batch_build_model(
     nn::NeuralNet,
     dataset::MIPVerify.LabelledDataset,
     target_indices::AbstractArray{<:Integer},
-    tightening_solver::MathProgBase.SolverInterface.AbstractMathProgSolver;
+    tightening_optimizer_factory::OptimizerFactory;
     pp::MIPVerify.PerturbationFamily = MIPVerify.UnrestrictedPerturbationFamily(),
     tightening_algorithm::MIPVerify.TighteningAlgorithm = DEFAULT_TIGHTENING_ALGORITHM,
     )::Nothing
@@ -385,7 +392,7 @@ function batch_build_model(
     for sample_number in target_indices
         Memento.info(MIPVerify.LOGGER, "Working on index $(sample_number)")
         input = MIPVerify.get_image(dataset.images, sample_number)
-        build_reusable_model_uncached(nn, input, pp, tightening_solver, tightening_algorithm)
+        build_reusable_model_uncached(nn, input, pp, tightening_optimizer_factory, tightening_algorithm)
     end
     return nothing
 end

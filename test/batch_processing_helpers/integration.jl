@@ -12,13 +12,13 @@ using MIPVerify: LInfNormBoundedPerturbationFamily
                 nn_wk17a, 
                 mnist.test, 
                 [1], # robust sample
-                TestHelpers.get_main_solver(), 
+                TestHelpers.get_main_optimizer(), 
                 solve_rerun_option=MIPVerify.never,
                 pp=MIPVerify.LInfNormBoundedPerturbationFamily(0.1),
                 norm_order=Inf, 
                 rebuild=true, 
                 tightening_algorithm=lp, 
-                tightening_solver=TestHelpers.get_tightening_solver(),
+                tightening_optimizer_factory=TestHelpers.get_tightening_optimizer_factory(),
                 cache_model=false,
                 solve_if_predicted_in_targeted=false,
                 save_path=dir
@@ -30,7 +30,7 @@ using MIPVerify: LInfNormBoundedPerturbationFamily
                 nn_wk17a, 
                 mnist.test, 
                 [9, 248], # non-robust and misclassified sample
-                TestHelpers.get_main_solver(), 
+                TestHelpers.get_main_optimizer(), 
                 solve_rerun_option=MIPVerify.never,
                 pp=MIPVerify.LInfNormBoundedPerturbationFamily(0.1),
                 norm_order=Inf, 
@@ -49,12 +49,12 @@ using MIPVerify: LInfNormBoundedPerturbationFamily
                 nn_wk17a, 
                 mnist.test, 
                 [1], 
-                TestHelpers.get_main_solver(), 
+                TestHelpers.get_main_optimizer(), 
                 solve_rerun_option=MIPVerify.never,
                 pp=MIPVerify.LInfNormBoundedPerturbationFamily(0.1),
                 norm_order=Inf,
                 tightening_algorithm=interval_arithmetic, 
-                tightening_solver=TestHelpers.get_tightening_solver(),
+                tightening_optimizer_factory=TestHelpers.get_tightening_optimizer(),
                 cache_model=false,
                 solve_if_predicted_in_targeted=false,
                 target_labels=[1, 8],
@@ -69,7 +69,7 @@ using MIPVerify: LInfNormBoundedPerturbationFamily
                 nn_wk17a, 
                 mnist.test, 
                 [1], 
-                TestHelpers.get_tightening_solver(),
+                TestHelpers.get_tightening_optimizer(),
                 pp=MIPVerify.LInfNormBoundedPerturbationFamily(0.1),
                 tightening_algorithm=interval_arithmetic
             )

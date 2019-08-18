@@ -56,7 +56,7 @@ using MIPVerify
             pool_v = MIPVerify.pool(input_array_v, MaxPool((2, 2)))
             # elements of the input array are made to take their maximum value
             @objective(m, Max, sum(input_array_v))
-            solve(m)
+            optimize!(m)
 
             solve_output = value.(pool_v)
             @test solve_output≈true_output

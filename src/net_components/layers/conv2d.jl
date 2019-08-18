@@ -68,21 +68,19 @@ function increment!(s::Real, input_val::Real, filter_val::Real)
 end
 
 function increment!(s::JuMP.AffExpr, input_val::JuMP.AffExpr, filter_val::Real)
-    append!(s, input_val*filter_val)
-    return s
+    add_to_expression!(s, input_val*filter_val)
 end
 
-function increment!(s::JuMP.AffExpr, input_val::JuMP.Variable, filter_val::Real)
-    push!(s, Float64(filter_val), input_val)
+function increment!(s::JuMP.AffExpr, input_val::JuMP.VariableRef, filter_val::Real)
+    add_to_expression!(s, input_val*filter_val)
 end
 
 function increment!(s::JuMP.AffExpr, input_val::Real, filter_val::JuMP.AffExpr)
-    append!(s, filter_val*input_val)
-    return s
+    add_to_expression!(s, input_val*filter_val)
 end
 
-function increment!(s::JuMP.AffExpr, input_val::Real, filter_val::JuMP.Variable)
-    push!(s, Float64(input_val), filter_val)
+function increment!(s::JuMP.AffExpr, input_val::Real, filter_val::JuMP.VariableRef)
+    add_to_expression!(s, input_val*filter_val)
 end
 
 

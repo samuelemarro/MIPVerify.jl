@@ -9,10 +9,10 @@ with it. This can only be true if it is an affine expression with no stored
 variables.
 """
 function is_constant(x::JuMP.AffExpr)
-    x.vars |> length == 0
+    x.terms |> length == 0
 end
 
-function is_constant(x::JuMP.Variable)
+function is_constant(x::JuMP.VariableRef)
     false
 end
 
@@ -44,10 +44,6 @@ bound_f = Dict(
     lower_bound_type => lowerbound,
     upper_bound_type => upperbound
 )
-bound_obj = Dict(
-    lower_bound_type => Min,
-    upper_bound_type => Max
-)
 bound_delta_f = Dict(
     lower_bound_type => (b, b_0) -> b - b_0,
     upper_bound_type => (b, b_0) -> b_0 - b
@@ -77,10 +73,16 @@ function tight_bound(
     relaxation = (tightening_algorithm == lp)
     # x is not constant, and thus x must have an associated model
     model = getmodel(x)
-    @objective(model, bound_obj[bound_type], x)
-    status = solve(model, suppress_warnings = true, relaxation=relaxation)
-    if status == :Optimal
-        b = getobjectivevalue(model)
+    if bound_type == lower_bound_type
+        @objective(model, Min, x)
+    else
+        @objective(model, Max, x)
+    end
+    # Currently lp and mip result in the same outcome since relaxation has not been reimplemented https://github.com/JuliaOpt/JuMP.jl/issues/1611
+    optimize!(model)
+    status = termination_status(model)
+    if status == MathOptInterface.OPTIMAL
+        b = JuMP.objective_value(model)
     elseif status == :UserLimit
         b = getobjectivebound(model)
         log_gap(model)
@@ -112,7 +114,7 @@ function tight_lowerbound(
 end
 
 function log_gap(m::JuMP.Model)
-    gap = abs(1-getobjectivebound(m)/getobjectivevalue(m))
+    gap = abs(1-getobjectivebound(m)/JuMP.objective_value(m))
     Memento.info(MIPVerify.LOGGER, "Hit user limit during solve to determine bounds. Multiplicative gap was $gap.")
 end
 
@@ -147,7 +149,7 @@ function relu(x::T, l::Real, u::Real)::JuMP.AffExpr where {T<:JuMPLinearType}
         # since we know that u!=l, x is not constant, and thus x must have an associated model
         model = getmodel(x)
         x_rect = @variable(model)
-        a = @variable(model, category = :Bin)
+        a = @variable(model, binary = true)
 
         # refined big-M formulation that takes advantage of the knowledge
         # that lower and upper bounds  are different.
@@ -157,8 +159,8 @@ function relu(x::T, l::Real, u::Real)::JuMP.AffExpr where {T<:JuMPLinearType}
         @constraint(model, x_rect >= 0)
 
         # Manually set the bounds for x_rect so they can be used by downstream operations.
-        setlowerbound(x_rect, 0)
-        setupperbound(x_rect, u)
+        set_lower_bound(x_rect, 0)
+        set_upper_bound(x_rect, u)
         return x_rect
     end
 end
@@ -297,7 +299,7 @@ end
 function maximum_of_constants(xs::AbstractArray{T}) where {T<:JuMPLinearType}
     @assert all(is_constant.(xs))
     max_val = map(x -> x.constant, xs) |> maximum
-    return one(JuMP.Variable)*max_val
+    return one(JuMP.VariableRef)*max_val
 end
 
 """
@@ -359,7 +361,7 @@ function maximum(
         l = Base.maximum(ls)
         u = Base.maximum(us)
         x_max = @variable(model, lower_bound = l, upper_bound = u)
-        a = @variable(model, [1:length(xs)], category =:Bin)
+        a = @variable(model, [1:length(xs)], binary = true)
         @constraint(model, sum(a) == 1)
         for (i, x) in enumerate(xs)
             umaxi = Base.maximum(us[1:end .!= i])
@@ -400,7 +402,7 @@ Only use when you are minimizing over the output in the objective.
 """
 function abs_ge(x::JuMPLinearType)::JuMP.AffExpr
     if is_constant(x)
-        return one(JuMP.Variable)*abs(x.constant)
+        return one(JuMP.VariableRef)*abs(x.constant)
     end
     model = getmodel(x)
     u = upperbound(x)
@@ -413,8 +415,8 @@ function abs_ge(x::JuMPLinearType)::JuMP.AffExpr
         x_abs = @variable(model)
         @constraint(model, x_abs >= x)
         @constraint(model, x_abs >= -x)
-        setlowerbound(x_abs, 0)
-        setupperbound(x_abs, max(-l, u))
+        set_lower_bound(x_abs, 0)
+        set_upper_bound(x_abs, max(-l, u))
         return x_abs
     end
 end
