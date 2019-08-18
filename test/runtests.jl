@@ -34,9 +34,9 @@ using JuMP
         @testset "variable-valued arrays" begin
             @testset "l1" begin
                 m = TestHelpers.get_new_model()
-                x1 = @variable(m, lowerbound=1, upperbound=5)
-                x2 = @variable(m, lowerbound=-8, upperbound=-2)
-                x3 = @variable(m, lowerbound=3, upperbound=10)
+                x1 = @variable(m, lower_bound = 1, upper_bound = 5)
+                x2 = @variable(m, lower_bound = -8, upper_bound = -2)
+                x3 = @variable(m, lower_bound = 3, upper_bound = 10)
                 xs = [x1, x2, x3]
                 n_1 = get_norm(1, xs)
                 n_2 = get_norm(2, xs)

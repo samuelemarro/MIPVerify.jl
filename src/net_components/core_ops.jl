@@ -358,7 +358,7 @@ function maximum(
     else
         l = Base.maximum(ls)
         u = Base.maximum(us)
-        x_max = @variable(model, lowerbound = l, upperbound=u)
+        x_max = @variable(model, lower_bound = l, upper_bound = u)
         a = @variable(model, [1:length(xs)], category =:Bin)
         @constraint(model, sum(a) == 1)
         for (i, x) in enumerate(xs)

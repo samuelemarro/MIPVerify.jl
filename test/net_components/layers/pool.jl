@@ -50,7 +50,7 @@ using MIPVerify
         @testset "Variable Input" begin
             m = TestHelpers.get_new_model()
             input_array_v = map(
-                i -> @variable(m, lowerbound=i-2, upperbound=i), 
+                i -> @variable(m, lower_bound = i-2, upper_bound = i), 
                 input_array
             )
             pool_v = MIPVerify.pool(input_array_v, MaxPool((2, 2)))

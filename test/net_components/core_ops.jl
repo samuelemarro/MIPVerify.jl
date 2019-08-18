@@ -76,7 +76,7 @@ end
     @testset "maximum(xs)" begin
         @testset "single variable to maximize over" begin
             m = TestHelpers.get_new_model()
-            x1 = @variable(m, lowerbound=0, upperbound=3)
+            x1 = @variable(m, lower_bound = 0, upper_bound = 3)
             xmax = MIPVerify.maximum([x1])
 
             # no binary variables need to be introduced
@@ -90,11 +90,11 @@ end
         @testset "multiple variables to maximize over, some constant" begin
             m = TestHelpers.get_new_model()
             x0 = one(JuMP.Variable) # add constant variable at start
-            x1 = @variable(m, lowerbound=0, upperbound=3)
-            x2 = @variable(m, lowerbound=4, upperbound=5)
-            x3 = @variable(m, lowerbound=2, upperbound=7)
-            x4 = @variable(m, lowerbound=-1, upperbound=1)
-            x5 = @variable(m, lowerbound=-3, upperbound=1)
+            x1 = @variable(m, lower_bound = 0, upper_bound = 3)
+            x2 = @variable(m, lower_bound = 4, upper_bound = 5)
+            x3 = @variable(m, lower_bound = 2, upper_bound = 7)
+            x4 = @variable(m, lower_bound = -1, upper_bound = 1)
+            x5 = @variable(m, lower_bound = -3, upper_bound = 1)
             xmax = MIPVerify.maximum([x0, x1, x2, x3, x4, x5])
             
             # an efficient implementation does not add binary variables for x1, x4 and x5
@@ -132,9 +132,9 @@ end
         end
         @testset "regression test to deal with indexing issue in v0.8.0" begin
             m = TestHelpers.get_new_model()
-            x1 = @variable(m, lowerbound=-2, upperbound=2) # upperbound of this variable is low enough that it gets filtered away 
-            x2 = @variable(m, lowerbound=2.5, upperbound=100)
-            x3 = @variable(m, lowerbound=3, upperbound=3.3)
+            x1 = @variable(m, lower_bound = -2, upper_bound = 2) # upperbound of this variable is low enough that it gets filtered away 
+            x2 = @variable(m, lower_bound = 2.5, upper_bound = 100)
+            x3 = @variable(m, lower_bound = 3, upper_bound = 3.3)
             xmax = MIPVerify.maximum([x1, x2, x3])
             
             # an efficient implementation does not add binary variables for x1
@@ -149,8 +149,8 @@ end
         end
         @testset "lowerbound on one matches upperbound on another; output expected to be constant" begin
             m = TestHelpers.get_new_model()
-            x1 = @variable(m, lowerbound=-6, upperbound=2)
-            x2 = @variable(m, lowerbound=2, upperbound=2)
+            x1 = @variable(m, lower_bound = -6, upper_bound = 2)
+            x2 = @variable(m, lower_bound = 2, upper_bound = 2)
 
             xmax = MIPVerify.maximum([x1, x2])
             
@@ -167,7 +167,7 @@ end
     @testset "maximum(xs, ls, us)" begin
         @testset "single variable to maximize over" begin
             m = TestHelpers.get_new_model()
-            x1 = @variable(m, lowerbound=0, upperbound=3)
+            x1 = @variable(m, lower_bound = 0, upper_bound = 3)
             xmax = MIPVerify.maximum([x1], [0], [1])
 
             # no binary variables need to be introduced
@@ -240,7 +240,7 @@ end
             end
             @testset "strictly non-negative" begin
                 m = TestHelpers.get_new_model()
-                x = @variable(m, lowerbound=0, upperbound=1)
+                x = @variable(m, lower_bound = 0, upper_bound = 1)
                 x_r = relu(x)
                 
                 # no binary variables should be introduced
@@ -252,7 +252,7 @@ end
             end
             @testset "strictly non-positive" begin
                 m = TestHelpers.get_new_model()
-                x = @variable(m, lowerbound=-1, upperbound=0)
+                x = @variable(m, lower_bound = -1, upper_bound = 0)
                 x_r = relu(x)
 
                 # no binary variables should be introduced
@@ -264,7 +264,7 @@ end
             end
             @testset "regular" begin
                 m = TestHelpers.get_new_model()
-                x = @variable(m, lowerbound=-1, upperbound=2)
+                x = @variable(m, lower_bound = -1, upper_bound = 2)
                 x_r = relu(x)
 
                 # at most one binary variable to be introduced
@@ -334,7 +334,7 @@ end
         @testset "Variable Input, single" begin
             @testset "mask is negative" begin
                 m = TestHelpers.get_new_model()
-                x = @variable(m, lowerbound=-1, upperbound=2)
+                x = @variable(m, lower_bound = -1, upper_bound = 2)
                 x_r = masked_relu(x, -1)
 
                 # no binary variables to be introduced
@@ -354,7 +354,7 @@ end
             end
             @testset "mask is 0" begin
                 m = TestHelpers.get_new_model()
-                x = @variable(m, lowerbound=-1, upperbound=2)
+                x = @variable(m, lower_bound = -1, upper_bound = 2)
                 x_r = masked_relu(x, 0)
 
                 # at most one binary variable to be introduced
@@ -374,7 +374,7 @@ end
             end
             @testset "mask is positive" begin
                 m = TestHelpers.get_new_model()
-                x = @variable(m, lowerbound=-1, upperbound=2)
+                x = @variable(m, lower_bound = -1, upper_bound = 2)
                 x_r = masked_relu(x, 1)
 
                 # no binary variables to be introduced
@@ -397,13 +397,13 @@ end
         @testset "Variable Input, array" begin
             @testset "invalid mask" begin
                 m = TestHelpers.get_new_model()
-                @variable(m, x[1:4], lowerbound=-1, upperbound=2)
+                @variable(m, x[1:4], lower_bound = -1, upper_bound = 2)
 
                 @test_throws AssertionError masked_relu(x, [-1, 0, 1])
             end
             @testset "valid mask" begin
                 m = TestHelpers.get_new_model()
-                @variable(m, x[1:3], lowerbound=-1, upperbound=2)
+                @variable(m, x[1:3], lower_bound = -1, upper_bound = 2)
 
                 x_r = masked_relu(x, [-1, 0, 1])
 
@@ -425,7 +425,7 @@ end
     @testset "abs_ge" begin
         @testset "strictly non-negative" begin
             m = TestHelpers.get_new_model()
-            x = @variable(m, lowerbound=0, upperbound=1)
+            x = @variable(m, lower_bound = 0, upper_bound = 1)
             x_a = abs_ge(x)
             
             # no binary variables should be introduced
@@ -437,7 +437,7 @@ end
         end
         @testset "strictly non-positive" begin
             m = TestHelpers.get_new_model()
-            x = @variable(m, lowerbound=-1, upperbound=0)
+            x = @variable(m, lower_bound = -1, upper_bound = 0)
             x_a = abs_ge(x)
 
             # no binary variables should be introduced
@@ -449,7 +449,7 @@ end
         end
         @testset "regular" begin
             m = TestHelpers.get_new_model()
-            x = @variable(m, lowerbound=-2, upperbound=2)
+            x = @variable(m, lower_bound = -2, upper_bound = 2)
             x_a = abs_ge(x)
 
             # no binary variables should be introduced
@@ -462,7 +462,7 @@ end
         @testset "abs_ge is not strict" begin
             # in particular we only need to satisfy the property |x_a| > x
             m = TestHelpers.get_new_model()
-            x = @variable(m, lowerbound=-4, upperbound=2)
+            x = @variable(m, lower_bound = -4, upper_bound = 2)
             x_a = abs_ge(x)
 
             # no binary variables should be introduced
@@ -541,7 +541,7 @@ end
                 @testset "selected variable has non-constant value, and can take the maximum value" begin
                     m = TestHelpers.get_new_model()
                     x1 = one(JuMP.Variable)
-                    x2 = @variable(m, lowerbound=4, upperbound=5)
+                    x2 = @variable(m, lower_bound = 4, upper_bound = 5)
                     set_max_indexes(m, [x1, x2], [2])
                     @objective(m, Min, x2)
                     solve(m)
@@ -550,7 +550,7 @@ end
                 @testset "selected variable has non-constant value, and cannot take the maximum value" begin
                     m = TestHelpers.get_new_model()
                     x1 = one(JuMP.Variable)
-                    x2 = @variable(m, lowerbound=-5, upperbound=-4)
+                    x2 = @variable(m, lower_bound = -5, upper_bound = -4)
                     set_max_indexes(m, [x1, x2], [2])
                     @objective(m, Min, x2)
                     solve_status = solve(m)
@@ -559,7 +559,7 @@ end
                 @testset "selected variable has constant value, and can take the maximum value" begin
                     m = TestHelpers.get_new_model()
                     x1 = one(JuMP.Variable)
-                    x2 = @variable(m, lowerbound=-5, upperbound=-4)
+                    x2 = @variable(m, lower_bound = -5, upper_bound = -4)
                     set_max_indexes(m, [x1, x2], [1])
                     @objective(m, Min, x2)
                     solve(m)
@@ -568,7 +568,7 @@ end
                 @testset "selected variable has constant value, and cannot take the maximum value" begin
                     m = TestHelpers.get_new_model()
                     x1 = one(JuMP.Variable)
-                    x2 = @variable(m, lowerbound=4, upperbound=5)
+                    x2 = @variable(m, lower_bound = 4, upper_bound = 5)
                     set_max_indexes(m, [x1, x2], [1])
                     @objective(m, Min, x2)
                     solve_status = solve(m)
@@ -581,7 +581,7 @@ end
     @testset "Bounds" begin
         @testset "Bounds on variables" begin
         m = TestHelpers.get_new_model()
-        x = @variable(m, [i=1:2], lowerbound = -1, upperbound = 1)
+        x = @variable(m, [i=1:2], lower_bound = -1, upper_bound = 1)
             
         A1 = [1 -0.5; -0.5 1]
         b1 = [0, 0]
