@@ -69,7 +69,7 @@ function test_find_adversarial_example(
         else
             @test isapprox(actual_objective_value, expected_objective_value; rtol=5e-5)
             
-            perturbed_output = getvalue(d[:PerturbedInput]) |> nn
+            perturbed_output = value.(d[:PerturbedInput]) |> nn
             perturbed_target_output = maximum(perturbed_output[Bool[i∈d[:TargetIndexes] for i = 1:length(d[:Output])]])
             maximum_perturbed_other_output = maximum(perturbed_output[Bool[i∉d[:TargetIndexes] for i = 1:length(d[:Output])]])
             @test perturbed_target_output/(maximum_perturbed_other_output+tolerance)≈1 atol=5e-5

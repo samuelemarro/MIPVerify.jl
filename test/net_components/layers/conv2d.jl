@@ -62,13 +62,13 @@ using MIPVerify: check_size, increment!
             s = 5*x+3*y
             t = 3*x+2*y
             increment!(s, 2, t)
-            @test getvalue(s)==1107
+            @test value(s)==1107
             increment!(s, t, -1)
-            @test getvalue(s)==805
+            @test value(s)==805
             increment!(s, x, 3)
-            @test getvalue(s)==1105
+            @test value(s)==1105
             increment!(s, y, 2)
-            @test getvalue(s)==1107
+            @test value(s)==1107
         end
     end
 
@@ -100,7 +100,7 @@ using MIPVerify: check_size, increment!
             @constraint(m, output_v .== true_output)
             solve(m)
 
-            p_solve = MIPVerify.Conv2d(getvalue(filter_v), getvalue(bias_v))
+            p_solve = MIPVerify.Conv2d(value.(filter_v), value.(bias_v))
             solve_output = MIPVerify.conv2d(input, p_solve)
             @test solve_output≈true_output
         end
@@ -111,7 +111,7 @@ using MIPVerify: check_size, increment!
             @constraint(m, output_v .== true_output)
             solve(m)
 
-            solve_output = MIPVerify.conv2d(getvalue(input_v), p)
+            solve_output = MIPVerify.conv2d(value.(input_v), p)
             @test solve_output≈true_output
         end
     end

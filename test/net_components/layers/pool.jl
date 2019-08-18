@@ -58,7 +58,7 @@ using MIPVerify
             @objective(m, Max, sum(input_array_v))
             solve(m)
 
-            solve_output = getvalue.(pool_v)
+            solve_output = value.(pool_v)
             @test solve_output≈true_output
         end
     end

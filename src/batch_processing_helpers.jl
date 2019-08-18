@@ -34,8 +34,8 @@ function extract_results_for_save(d::Dict)::Dict
     r[:TighteningApproach] = d[:TighteningApproach]
     r[:TotalTime] = d[:TotalTime]
     if !isnan(r[:ObjectiveValue])
-        r[:PerturbationValue] = d[:Perturbation] |> getvalue
-        r[:PerturbedInputValue] = d[:PerturbedInput] |> getvalue
+        r[:PerturbationValue] = d[:Perturbation] |> value.
+        r[:PerturbedInputValue] = d[:PerturbedInput] |> value.
     end
     return r
 end

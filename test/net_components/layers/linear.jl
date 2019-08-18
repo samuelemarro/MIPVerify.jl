@@ -56,7 +56,7 @@ using MIPVerify: Linear, check_size
             m = TestHelpers.get_new_model()
             x = @variable(m, start=7)
             y = @variable(m, start=8)
-            @test getvalue(p([x, y])) == [28, 59]
+            @test value.(p([x, y])) == [28, 59]
         end
     end
 

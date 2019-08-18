@@ -84,7 +84,7 @@ end
 
             @objective(m, Max, x1)
             solve(m)
-            solve_output = getvalue(xmax)
+            solve_output = value(xmax)
             @test solve_output≈3
         end
         @testset "multiple variables to maximize over, some constant" begin
@@ -104,7 +104,7 @@ end
             @objective(m, Max, x1+x2+x3+x4+x5)
             solve(m)
             
-            solve_output = getvalue(xmax)
+            solve_output = value(xmax)
             @test solve_output≈7
         end
         @testset "single variable to maximize over, constant" begin
@@ -115,7 +115,7 @@ end
             # no binary variables need to be introduced
             @test count_binary_variables(m)==0
 
-            solve_output = getvalue(xmax)
+            solve_output = value(xmax)
             @test solve_output≈3
         end
         @testset "multiple variables to maximize over, all constant" begin
@@ -127,7 +127,7 @@ end
             # no binary variables need to be introduced
             @test count_binary_variables(m)==0
 
-            solve_output = getvalue(xmax)
+            solve_output = value(xmax)
             @test solve_output≈2
         end
         @testset "regression test to deal with indexing issue in v0.8.0" begin
@@ -144,7 +144,7 @@ end
             @objective(m, Max, xmax)
             solve(m)
             
-            solve_output = getvalue(xmax)
+            solve_output = value(xmax)
             @test solve_output≈100
         end
         @testset "lowerbound on one matches upperbound on another; output expected to be constant" begin
@@ -159,7 +159,7 @@ end
             
             solve(m)
             
-            solve_output = getvalue(xmax)
+            solve_output = value(xmax)
             @test solve_output≈2
         end
     end
@@ -175,7 +175,7 @@ end
 
             @objective(m, Max, x1)
             solve(m)
-            solve_output = getvalue(xmax)
+            solve_output = value(xmax)
             @test solve_output≈3
         end
         @testset "multiple variables to maximize over, all constant" begin
@@ -187,7 +187,7 @@ end
             # no binary variables need to be introduced
             @test count_binary_variables(m)==0
 
-            solve_output = getvalue(xmax)
+            solve_output = value(xmax)
             @test solve_output≈2
         end
     end
@@ -199,7 +199,7 @@ end
             x2 = one(JuMP.Variable)*2
             xmax = MIPVerify.maximum_ge([x1, x2])
 
-            solve_output = getvalue(xmax)
+            solve_output = value(xmax)
             @test solve_output≈2
         end
     end
@@ -210,7 +210,7 @@ end
             x = one(JuMP.Variable)
             x_abs = MIPVerify.abs_ge(x)
 
-            solve_output = getvalue(x_abs)
+            solve_output = value(x_abs)
             @test solve_output≈1
         end
 
@@ -219,7 +219,7 @@ end
             x = one(JuMP.Variable)*-1
             x_abs = MIPVerify.abs_ge(x)
 
-            solve_output = getvalue(x_abs)
+            solve_output = value(x_abs)
             @test solve_output≈1
         end
     end
@@ -343,14 +343,14 @@ end
                 @objective(m, Max, 2*x_r-x)
                 solve(m)
                 @test getobjectivevalue(m)≈1
-                @test getvalue(x)≈-1
-                @test getvalue(x_r)≈0
+                @test value(x)≈-1
+                @test value(x_r)≈0
 
                 @objective(m, Min, 2*x_r-x)
                 solve(m)
                 @test getobjectivevalue(m)≈-2
-                @test getvalue(x)≈2
-                @test getvalue(x_r)≈0
+                @test value(x)≈2
+                @test value(x_r)≈0
             end
             @testset "mask is 0" begin
                 m = TestHelpers.get_new_model()
@@ -363,14 +363,14 @@ end
                 @objective(m, Max, 2*x_r-x)
                 solve(m)
                 @test getobjectivevalue(m)≈2
-                @test getvalue(x)≈2
-                @test getvalue(x_r)≈2
+                @test value(x)≈2
+                @test value(x_r)≈2
 
                 @objective(m, Min, 2*x_r-x)
                 solve(m)
                 @test getobjectivevalue(m)≈0
-                @test getvalue(x)≈0
-                @test getvalue(x_r)≈0
+                @test value(x)≈0
+                @test value(x_r)≈0
             end
             @testset "mask is positive" begin
                 m = TestHelpers.get_new_model()
@@ -383,14 +383,14 @@ end
                 @objective(m, Max, 2*x_r-x)
                 solve(m)
                 @test getobjectivevalue(m)≈2
-                @test getvalue(x)≈2
-                @test getvalue(x_r)≈2
+                @test value(x)≈2
+                @test value(x_r)≈2
 
                 @objective(m, Min, 2*x_r-x)
                 solve(m)
                 @test getobjectivevalue(m)≈-1
-                @test getvalue(x)≈-1
-                @test getvalue(x_r)≈-1
+                @test value(x)≈-1
+                @test value(x_r)≈-1
             end
         end
 
@@ -410,14 +410,14 @@ end
                 @objective(m, Max, sum(2*x_r-x))
                 solve(m)
                 @test getobjectivevalue(m)≈5
-                @test getvalue(x)≈[-1, 2, 2]
-                @test getvalue(x_r)≈[0, 2, 2]
+                @test value.(x)≈[-1, 2, 2]
+                @test value.(x_r)≈[0, 2, 2]
 
                 @objective(m, Min, sum(2*x_r-x))
                 solve(m)
                 @test getobjectivevalue(m)≈-3
-                @test getvalue(x)≈[2, 0, -1]
-                @test getvalue(x_r)≈[0, 0, -1]
+                @test value.(x)≈[2, 0, -1]
+                @test value.(x_r)≈[0, 0, -1]
             end
         end
     end
@@ -493,7 +493,7 @@ end
                 set_max_indexes(m, x, [1])
                 @objective(m, Min, x[1])
                 solve(m)
-                @test getvalue(x[1])≈5
+                @test value(x[1])≈5
             end
             @testset "with tolerance" begin
                 tolerance = 3
@@ -504,7 +504,7 @@ end
                 set_max_indexes(m, x, [1], tolerance = tolerance)
                 @objective(m, Min, x[1])
                 solve(m)
-                @test getvalue(x[1])≈5+tolerance
+                @test value(x[1])≈5+tolerance
             end
         end
         @testset "multiple target indexes" begin
@@ -519,8 +519,8 @@ end
                 set_max_indexes(m, x, [2, 3])
                 @objective(m, Min, x[2]+x[3])
                 solve(m)
-                @test getvalue(x[2])≈5
-                @test getvalue(x[3])≈-1
+                @test value(x[2])≈5
+                @test value(x[3])≈-1
             end
             @testset "with tolerance" begin
                 tolerance = 3
@@ -534,8 +534,8 @@ end
                 set_max_indexes(m, x, [2, 3], tolerance = tolerance)
                 @objective(m, Min, x[2]+x[3])
                 solve(m)
-                @test getvalue(x[2])≈5+tolerance
-                @test getvalue(x[3])≈-1
+                @test value(x[2])≈5+tolerance
+                @test value(x[3])≈-1
             end
             @testset "first JuMPLinearType is constant" begin
                 @testset "selected variable has non-constant value, and can take the maximum value" begin
@@ -545,7 +545,7 @@ end
                     set_max_indexes(m, [x1, x2], [2])
                     @objective(m, Min, x2)
                     solve(m)
-                    @test getvalue(x2)≈4
+                    @test value(x2)≈4
                 end
                 @testset "selected variable has non-constant value, and cannot take the maximum value" begin
                     m = TestHelpers.get_new_model()
@@ -563,7 +563,7 @@ end
                     set_max_indexes(m, [x1, x2], [1])
                     @objective(m, Min, x2)
                     solve(m)
-                    @test getvalue(x2)≈-5
+                    @test value(x2)≈-5
                 end
                 @testset "selected variable has constant value, and cannot take the maximum value" begin
                     m = TestHelpers.get_new_model()
