@@ -1,5 +1,3 @@
-using ConditionalJuMP
-
 export Linear
 
 """
@@ -83,7 +81,7 @@ function matmul(
             s = increment!(s, x[j], params.matrix[j, i])
         end
         s += params.bias[i]
-        ConditionalJuMP.simplify!(s)
+        simplify!(s)
         output[i] = s
     end
 

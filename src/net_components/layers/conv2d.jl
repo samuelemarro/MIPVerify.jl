@@ -1,5 +1,4 @@
 using JuMP
-using ConditionalJuMP
 
 export Conv2d
 
@@ -148,7 +147,7 @@ function conv2d(
         end
         s += params.bias[i_4]
         if T<:JuMPLinearType
-            ConditionalJuMP.simplify!(s)
+            simplify!(s)
         end
         (@nref 4 output i) = s
     end

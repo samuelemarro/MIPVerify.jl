@@ -1,5 +1,4 @@
 AutoHashEquals 0.2.0
-ConditionalJuMP 0.1.0
 CSV 0.5.9
 DataFrames 0.19.0
 DocStringExtensions 0.8.0

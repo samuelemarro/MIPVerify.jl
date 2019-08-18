@@ -3,7 +3,6 @@ using JuMP
 using MathProgBase
 using MIPVerify
 using MIPVerify: relu, get_target_indexes, set_max_indexes, get_max_index, matmul, tight_upperbound, tight_lowerbound, abs_ge, masked_relu, is_constant, get_tightening_algorithm, mip, lp, interval_arithmetic, DEFAULT_TIGHTENING_ALGORITHM, TighteningAlgorithm, MIPVerifyExt
-using ConditionalJuMP
 @isdefined(TestHelpers) || include("../TestHelpers.jl")
 
 function count_binary_variables(m::Model)
@@ -294,15 +293,27 @@ end
                 m = TestHelpers.get_new_model()
                 x = @variable(m)
                 x_r = relu(x, -2, -1)
-                @test upperbound(x_r) == 0
-                @test lowerbound(x_r) == 0
+
+                @objective(m, Max, x_r)
+                solve(m)
+                @test getobjectivevalue(m)≈0
+
+                @objective(m, Min, x_r)
+                solve(m)
+                @test getobjectivevalue(m)≈0
             end
             @testset "constant" begin
                 m = TestHelpers.get_new_model()
                 x = @variable(m)
                 x_r = relu(x, 2, 2)
-                @test upperbound(x_r) == 2
-                @test lowerbound(x_r) == 2
+
+                @objective(m, Max, x_r)
+                solve(m)
+                @test getobjectivevalue(m)≈2
+
+                @objective(m, Min, x_r)
+                solve(m)
+                @test getobjectivevalue(m)≈2
             end
         end        
     end

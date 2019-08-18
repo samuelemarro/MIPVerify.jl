@@ -1,5 +1,4 @@
 using JuMP
-using ConditionalJuMP
 using Memento
 
 """
@@ -20,7 +19,7 @@ end
 function getmodel(xs::AbstractArray{T}) where {T<:JuMPLinearType}
     for x in xs
         if !is_constant(x)
-            return ConditionalJuMP.getmodel(x)
+            return getmodel(x)
         end
     end
     throw(DomainError("None of the JuMPLinearTypes has an associated model."))
@@ -35,7 +34,7 @@ function get_tightening_algorithm(
         return nta
     else
         # x is not constant, and thus x must have an associated model
-        model = ConditionalJuMP.getmodel(x)
+        model = getmodel(x)
         return !haskey(model.ext, :MIPVerify) ? DEFAULT_TIGHTENING_ALGORITHM : model.ext[:MIPVerify].tightening_algorithm
     end
 end
@@ -77,7 +76,7 @@ function tight_bound(
     end
     relaxation = (tightening_algorithm == lp)
     # x is not constant, and thus x must have an associated model
-    model = ConditionalJuMP.getmodel(x)
+    model = getmodel(x)
     @objective(model, bound_obj[bound_type], x)
     status = solve(model, suppress_warnings = true, relaxation=relaxation)
     if status == :Optimal
@@ -146,7 +145,7 @@ function relu(x::T, l::Real, u::Real)::JuMP.AffExpr where {T<:JuMPLinearType}
         return x
     else
         # since we know that u!=l, x is not constant, and thus x must have an associated model
-        model = ConditionalJuMP.getmodel(x)
+        model = getmodel(x)
         x_rect = @variable(model)
         a = @variable(model, category = :Bin)
 
@@ -314,7 +313,7 @@ function maximum(xs::AbstractArray{T})::JuMP.AffExpr where {T<:JuMPLinearType}
         return maximum_of_constants(xs)
     end
     # at least one of xs is not constant.
-    model = MIPVerify.getmodel(xs)
+    model = getmodel(xs)
 
     # TODO (vtjeng): [PERF] skip calculating lowerbound for index if upperbound is lower than
     # largest current lowerbound.
@@ -353,7 +352,7 @@ function maximum(
         return maximum_of_constants(xs)
     end
     # at least one of xs is not constant.
-    model = MIPVerify.getmodel(xs)
+    model = getmodel(xs)
     if length(xs) == 1
         return first(xs)
     else
@@ -386,7 +385,7 @@ function maximum_ge(xs::AbstractArray{T})::JuMPLinearType where {T<:JuMPLinearTy
         return maximum_of_constants(xs)
     end
     # at least one of xs is not constant.
-    model = MIPVerify.getmodel(xs)
+    model = getmodel(xs)
     x_max = @variable(model)
     @constraint(model, x_max .>= xs)
     return x_max
@@ -403,7 +402,7 @@ function abs_ge(x::JuMPLinearType)::JuMP.AffExpr
     if is_constant(x)
         return one(JuMP.Variable)*abs(x.constant)
     end
-    model = ConditionalJuMP.getmodel(x)
+    model = getmodel(x)
     u = upperbound(x)
     l = lowerbound(x)
     if u <= 0
