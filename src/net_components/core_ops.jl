@@ -84,7 +84,7 @@ function tight_bound(
     if status == MathOptInterface.OPTIMAL
         b = JuMP.objective_value(model)
     elseif status == :UserLimit
-        b = getobjectivebound(model)
+        b = objective_bound(model)
         log_gap(model)
     else
         Memento.warn(MIPVerify.LOGGER, "Unexpected solve status $(status) while tightening via $(tightening_algorithm); using interval_arithmetic to obtain upperbound.")
@@ -114,7 +114,7 @@ function tight_lowerbound(
 end
 
 function log_gap(m::JuMP.Model)
-    gap = abs(1-getobjectivebound(m)/JuMP.objective_value(m))
+    gap = abs(1-objective_bound(m)/JuMP.objective_value(m))
     Memento.info(MIPVerify.LOGGER, "Hit user limit during solve to determine bounds. Multiplicative gap was $gap.")
 end
 

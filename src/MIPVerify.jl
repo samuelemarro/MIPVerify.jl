@@ -135,6 +135,7 @@ function find_adversarial_example(
             solve_time = @elapsed begin 
                 optimize!(m)
                 d[:SolveStatus] = termination_status(m)
+                @assert d[:SolveStatus] in [MathOptInterface.OPTIMAL, MathOptInterface.INFEASIBLE, MathOptInterface.INFEASIBLE_OR_UNBOUNDED]
             end
             d[:SolveTime] = try
                 solve_time(m)

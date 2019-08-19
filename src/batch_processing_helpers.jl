@@ -26,8 +26,8 @@ function extract_results_for_save(d::Dict)::Dict
     m = d[:Model]
     r = Dict()
     r[:SolveTime] = d[:SolveTime]
-    r[:ObjectiveBound] = getobjbound(m)
-    r[:ObjectiveValue] = JuMP.objective_value(m)
+    r[:ObjectiveBound] = objective_bound(m)
+    r[:ObjectiveValue] = is_infeasible(d[:SolveStatus]) ? NaN : JuMP.objective_value(m) 
     r[:TargetIndexes] = d[:TargetIndexes]
     r[:SolveStatus] = d[:SolveStatus]
     r[:PredictedIndex] = d[:PredictedIndex]
@@ -153,7 +153,7 @@ function save_to_disk(
         results_file_relative_path = joinpath(results_dir, "$(results_file_uuid).mat")
         results_file_path = joinpath(main_path, results_file_relative_path)
 
-        matwrite(results_file_path, Dict(ascii(string(k)) => v for (k, v) in r))
+        matwrite(results_file_path, Dict(ascii(string(k)) => string(v) for (k, v) in r))
         summary_line = generate_csv_summary_line(sample_number, results_file_relative_path, r)
     else
         summary_line = generate_csv_summary_line_optimal(sample_number, d)
