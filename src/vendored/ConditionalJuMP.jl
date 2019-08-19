@@ -4,14 +4,6 @@
 using JuMP
 using IntervalArithmetic: Interval
 
-"""
-Simplification function that chooses the appropriate algorithm based on the number
-of variables.
-"""
-function simplify!(e::JuMP.GenericAffExpr{T, VariableRef}) where T
-    e
-end
-
 getmodel(x::VariableRef) = x.model
 getmodel(x::GenericAffExpr) = first(x.terms)[1].model
 

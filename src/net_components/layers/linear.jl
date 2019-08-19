@@ -81,7 +81,6 @@ function matmul(
             s = increment!(s, x[j], params.matrix[j, i])
         end
         s += params.bias[i]
-        simplify!(s)
         output[i] = s
     end
 

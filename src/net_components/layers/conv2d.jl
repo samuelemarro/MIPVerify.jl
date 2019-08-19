@@ -144,9 +144,6 @@ function conv2d(
             end
         end
         s += params.bias[i_4]
-        if T<:JuMPLinearType
-            simplify!(s)
-        end
         (@nref 4 output i) = s
     end
 
