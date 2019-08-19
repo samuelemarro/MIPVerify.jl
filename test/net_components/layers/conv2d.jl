@@ -57,17 +57,21 @@ using MIPVerify: check_size, increment!
         end
         @testset "JuMP.AffExpr * Real" begin
             m = TestHelpers.get_new_model()
-            x = @variable(m, start=100)
-            y = @variable(m, start=1)
+            x = @variable(m, lower_bound=100, upper_bound=100)
+            y = @variable(m, lower_bound=1, upper_bound=1)
             s = 5*x+3*y
             t = 3*x+2*y
             increment!(s, 2, t)
+            optimize!(m)
             @test value(s)==1107
             increment!(s, t, -1)
+            optimize!(m)
             @test value(s)==805
             increment!(s, x, 3)
+            optimize!(m)
             @test value(s)==1105
             increment!(s, y, 2)
+            optimize!(m)
             @test value(s)==1107
         end
     end

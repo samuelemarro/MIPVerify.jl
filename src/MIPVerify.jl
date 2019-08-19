@@ -20,6 +20,7 @@ export find_adversarial_example, frac_correct, interval_arithmetic, lp, mip
 const DEFAULT_TIGHTENING_ALGORITHM = mip
 
 include("vendored/ConditionalJuMP.jl")
+include("vendored/JuMP.jl")
 
 include("net_components.jl")
 include("models.jl")
@@ -38,7 +39,7 @@ Finds the perturbed image closest to `input` such that the network described by 
 classifies the perturbed image in one of the categories identified by the 
 indexes in `target_selection`.
 
-`main_solver` specifies the solver used to solve the MIP problem once it has been built.
+`main_optimizer_factory` specifies the solver used to solve the MIP problem once it has been built.
 
 The output dictionary has keys `:Model, :PerturbationFamily, :TargetIndexes, :SolveStatus,
 :Perturbation, :PerturbedInput, :Output`. 
@@ -56,7 +57,7 @@ We guarantee that `y[j] - y[i] ≥ tolerance` for some `j ∈ target_selection` 
     the family of perturbations over which we are searching for adversarial examples.
 + `norm_order::Real`: Defaults to `1`. Determines the distance norm used to determine the 
     distance from the perturbed image to the original. Supported options are `1`, `Inf` 
-    and `2` (if the `main_solver` used can solve MIQPs.)
+    and `2` (if the `main_optimizer_factory` used can solve MIQPs.)
 + `tolerance::Real`: Defaults to `0.0`. See formal definition above.
 + `tightening_algorithm::MIPVerify.TighteningAlgorithm`: Defaults to `mip`. Determines how we 
     determine the upper and lower bounds on input to each nonlinear unit. 
@@ -65,7 +66,7 @@ We guarantee that `y[j] - y[i] ≥ tolerance` for some `j ∈ target_selection` 
     (2) `lp` solves an `lp` corresponding to the `mip` formulation, but with any integer constraints relaxed.
     (3) `mip` solves the full `mip` formulation.
 + `tightening_optimizer_factory`: TODO (vtjeng) update Solver used to determine upper and lower bounds for input to nonlinear units.
-    Defaults to the same type of solver as the `main_solver`, with a time limit of 20s per solver 
+    Defaults to the same type of solver as the `main_optimizer_factory`, with a time limit of 20s per solver 
     and output suppressed. Used only if the `tightening_algorithm` is `lp` or `mip`.
 + `rebuild::Bool`: Defaults to `false`. If `true`, rebuilds model by determining upper and lower
     bounds on input to each non-linear unit even if a cached model exists.
@@ -136,9 +137,9 @@ function find_adversarial_example(
                 d[:SolveStatus] = termination_status(m)
             end
             d[:SolveTime] = try
-                getsolvetime(m)
+                solve_time(m)
             catch err
-                # CBC solver, used for testing, does not implement `getsolvetime`.
+                # CBC solver, used for testing, does not support accessing the attribute MathOptInterface.SolveTime().
                 isa(err, MethodError) || rethrow(err)
                 solve_time
             end

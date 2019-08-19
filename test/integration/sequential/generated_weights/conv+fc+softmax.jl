@@ -3,7 +3,7 @@ using MIPVerify
 using MIPVerify: UnrestrictedPerturbationFamily, BlurringPerturbationFamily, LInfNormBoundedPerturbationFamily
 @isdefined(TestHelpers) || include("../../../TestHelpers.jl")
 
-@testset "Conv + FC + Softmax" begin
+@testset "conv + fc + softmax" begin
     ### Parameters for neural net
     batch = 1
     c1_in_height = 8

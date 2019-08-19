@@ -369,7 +369,7 @@ function batch_find_targeted_attack(
 
                 Memento.info(MIPVerify.LOGGER, "Working on index $(sample_number), with true_label $(true_one_indexed_label) and target_label $(target_label)")
             
-                d = find_adversarial_example(nn, input, target_label, main_solver, invert_target_selection = false, pp=pp, norm_order=norm_order, tolerance=tolerance, rebuild=rebuild, tightening_algorithm = tightening_algorithm, tightening_optimizer_factory = tightening_optimizer_factory, cache_model=cache_model, solve_if_predicted_in_targeted=solve_if_predicted_in_targeted)
+                d = find_adversarial_example(nn, input, target_label, main_optimizer_factory, invert_target_selection = false, pp=pp, norm_order=norm_order, tolerance=tolerance, rebuild=rebuild, tightening_algorithm = tightening_algorithm, tightening_optimizer_factory = tightening_optimizer_factory, cache_model=cache_model, solve_if_predicted_in_targeted=solve_if_predicted_in_targeted)
 
                 save_to_disk(sample_number, main_path, results_dir, summary_file_path, d, solve_if_predicted_in_targeted)
             end

@@ -54,8 +54,9 @@ using MIPVerify: Linear, check_size
         end
         @testset "JuMP.AffExpr * Real" begin
             m = TestHelpers.get_new_model()
-            x = @variable(m, start=7)
-            y = @variable(m, start=8)
+            x = @variable(m, lower_bound=7, upper_bound=7)
+            y = @variable(m, lower_bound=8, upper_bound=8)
+            optimize!(m)
             @test value.(p([x, y])) == [28, 59]
         end
     end

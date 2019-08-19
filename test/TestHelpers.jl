@@ -9,7 +9,7 @@ using MIPVerify: find_adversarial_example
 using MIPVerify: NeuralNet
 using MIPVerify: PerturbationFamily
 
-const TEST_DEFAULT_TIGHTENING_ALGORITHM = lp
+const TEST_DEFAULT_TIGHTENING_ALGORITHM = interval_arithmetic
 
 if Base.find_package("Gurobi") == nothing
     using Cbc
