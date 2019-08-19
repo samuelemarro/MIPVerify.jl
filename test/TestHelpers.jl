@@ -70,7 +70,7 @@ function test_find_adversarial_example(
     ) where {N} 
     d = find_adversarial_example(
         nn, input, target_selection, get_main_optimizer_factory(),
-        pp = pp, norm_order = norm_order, tolerance = tolerance, rebuild=false, 
+        pp = pp, norm_order = norm_order, tolerance = tolerance, rebuild=true, 
         tightening_optimizer_factory=get_tightening_optimizer_factory(), tightening_algorithm=TEST_DEFAULT_TIGHTENING_ALGORITHM, 
         invert_target_selection=invert_target_selection)
     if d[:SolveStatus] == MathOptInterface.INFEASIBLE || d[:SolveStatus] == MathOptInterface.INFEASIBLE_OR_UNBOUNDED
