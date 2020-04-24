@@ -146,7 +146,7 @@ function conv2d(
     end
 
     W = Base.promote_op(+, V, Base.promote_op(*, T, U))
-    output = Array{W}(output_size)
+    output = Array{W}(undef, output_size)
 
     @nloops 4 i output begin
         s::W = 0
