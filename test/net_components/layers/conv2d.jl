@@ -215,7 +215,7 @@ using MIPVerify: check_size, increment!
             153 162 171
         ]
         true_output = reshape(transpose(true_output_raw), (1, 3, 3, 1))
-        p = Conv2d(filter, bias, Padding.valid)
+        p = Conv2d(filter, bias, valid)
         @testset "Numerical Input, Numerical Layer Parameters" begin
             evaluated_output = MIPVerify.conv2d(input, p)
             @test evaluated_output == true_output
