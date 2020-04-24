@@ -203,4 +203,31 @@ using MIPVerify: check_size, increment!
             @test solve_output≈true_output
         end
     end
+
+    @testset "conv2d with 'valid' padding" begin
+        input = reshape([1:1:25;], (1, 5, 5, 1))
+        filter = ones(3, 3, 1, 1)  # basic tensor containing all ones
+        bias = [0]
+        true_output_raw = [
+            63 72 81;
+            108 117 126;
+            153 162 171
+        ]
+        true_output = reshape(transpose(true_output_raw), (1, 3, 3, 1))
+        p = Conv2d(filter, bias, Conv2d.Padding.valid)
+        @testset "Numerical Input, Numerical Layer Parameters" begin
+            evaluated_output = MIPVerify.conv2d(input, p)
+            @test evaluated_output == true_output
+        end
+        @testset "Variable Input, Numerical Layer Parameters" begin
+            m = TestHelpers.get_new_model()
+            input_v = map(_ -> @variable(m), CartesianIndices(input_size))
+            output_v = MIPVerify.conv2d(input_v, p)
+            @constraint(m, output_v .== true_output)
+            solve(m)
+
+            solve_output = MIPVerify.conv2d(getvalue(input_v), p)
+            @test solve_output≈true_output
+        end
+    end
 end
