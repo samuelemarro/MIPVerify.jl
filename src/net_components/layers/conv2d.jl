@@ -2,7 +2,7 @@ using JuMP
 using ConditionalJuMP
 
 export Conv2d
-export Padding
+export Padding, same, valid
 
 @enum Padding same=1 valid=2
 
