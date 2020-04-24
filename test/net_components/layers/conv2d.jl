@@ -205,7 +205,7 @@ using MIPVerify: check_size, increment!
     end
 
     @testset "conv2d with 'valid' padding" begin
-        input_size = (1, 5, 5, 2)
+        input_size = (1, 5, 5, 1)
         input = reshape([1:1:25;], input_size)
         filter = ones(3, 3, 1, 1)  # basic tensor containing all ones
         bias = [0]
